@@ -2,12 +2,27 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppLoggerService } from './logger/app-logger.service';
+import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
+import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     // Wait for a custom logger to be initiated
     bufferLogs: true
   });
+
+  // Global validation pipe setup
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+      transformOptions: { enableImplicitConversion: true },
+    }),
+  );
+
+  // Global trasport-level exception filter
+  app.useGlobalFilters(new GlobalExceptionFilter());
 
   // Swagger docs setup
   if (process.env.NODE_ENV != 'production') {

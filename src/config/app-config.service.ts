@@ -16,16 +16,12 @@ export class AppConfigService {
 
     // ETH
 
-    public get ethRpcApiKey(): string {
-        return this.configService.getOrThrow<string>('ETH_RPC_API_KEY');
-    }
-
-    public get ethRpcChainId(): number {
-        return this.configService.getOrThrow<number>('ETH_RPC_CHAIN_ID');
+    public get ethRpcUri(): string {
+        return this.configService.getOrThrow<string>('ETH_RPC_URI');
     }
 
     public get gasPriceCacheTTLMs(): number {
-        return this.configService.getOrThrow<number>('GAS_CACHE_TTL_MS')
+        return this.configService.getOrThrow<number>('GAS_PRICE_CACHE_TTL_MS')
     }
 
     // Uniswap v2

@@ -6,9 +6,8 @@ export const appConfigValidationSchema = Joi.object({
     // APP
     APP_PORT: Joi.number().required(),
 
-    // ETH RPC provider (Alchemy)
-    ETH_RPC_API_KEY: Joi.string().required(),
-    ETH_RPC_CHAIN_ID: Joi.number().integer().required(),
+    // ETH RPC provider 
+    ETH_RPC_URI: Joi.string().uri().required(),
 
     GAS_PRICE_CACHE_TTL_MS: Joi.number().required(),
 

@@ -3,8 +3,8 @@ import { IsDefined, IsNumber, IsString } from "class-validator";
 
 export class GasPriceResponseDTO {
     @ApiProperty({
-        description: 'Returns last cached gas price in wei',
-        example: '1000000000'
+        description: 'Last cached gas price in wei',
+        example: '777243899'
     })
     public readonly wei: string;
 

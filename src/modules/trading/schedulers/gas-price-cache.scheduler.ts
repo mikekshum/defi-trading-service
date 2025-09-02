@@ -8,8 +8,7 @@ export class GasPriceCacheScheduler {
     private isRunning = false;
 
     constructor(
-        private readonly tradingService: TradingService,
-        private readonly appConfigService: AppConfigService
+        private readonly tradingService: TradingService
     ) { }
 
     // Checks if it's valid for update every 1000 ms
@@ -24,7 +23,7 @@ export class GasPriceCacheScheduler {
             this.isRunning = true;
             await this.tradingService.updateGasPriceCache();
         } catch (ex) {
-
+            
         } finally {
             this.isRunning = false;
         }

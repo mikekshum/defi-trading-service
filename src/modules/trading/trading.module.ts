@@ -16,9 +16,6 @@ import { GasPriceCacheScheduler } from "./schedulers/gas-price-cache.scheduler";
     providers: [
         TradingService,
         GasPriceCacheScheduler
-    ],
-    exports: [
-        TradingService
     ]
 })
 export class TradingModule {}

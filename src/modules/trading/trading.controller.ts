@@ -27,7 +27,7 @@ export class TradingController {
         };
     }
 
-    @Post('/return/:fromTokenAddress/:toTokenAddress/:amountIn')
+    @Get('/return/:fromTokenAddress/:toTokenAddress/:amountIn')
     @ApiOperation({ summary: 'Get estimated toToken amountOut' })
     @ApiResponse({ status: 200, type: TokenReturnResponseDTO })
     @ApiResponse({ status: 500, type: HttpErrorResponseDTO })

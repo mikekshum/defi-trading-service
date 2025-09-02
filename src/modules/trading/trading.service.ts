@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, OnModuleInit } from "@nestjs/common";
 import { Contract, ethers } from "ethers";
 import { AppConfigService } from "src/config/app-config.service";
 import { TradingGasPriceFetchException } from "./exceptions/trading-gas-price-fetch.exception";
@@ -10,7 +10,7 @@ import { TradingFactoryContractCallException } from "./exceptions/trading-factor
 import { TradingPairContractCallException } from "./exceptions/trading-pair-contract-call.exception";
 
 @Injectable()
-export class TradingService {
+export class TradingService implements OnModuleInit {
     private provider: ethers.JsonRpcProvider;
     private uniswapFactoryContract: Contract;
 
@@ -19,24 +19,26 @@ export class TradingService {
     constructor(
         private readonly appConfigService: AppConfigService
     ) {
-        this.provider = new ethers.AlchemyProvider(
-            this.appConfigService.ethRpcChainId, 
-            this.appConfigService.ethRpcApiKey,
-        );
+        this.provider = new ethers.JsonRpcProvider(this.appConfigService.ethRpcUri)
 
         this.uniswapFactoryContract = new ethers.Contract(this.appConfigService.uniswapV2FactoryAddress, UniswapV2FactoryABI, this.provider);
-        this.updateGasPriceCache();
+    }
+
+    // Initialize gas price caching process
+    public async onModuleInit() {
+        try {
+            await this.updateGasPriceCache();
+        } catch (err) {
+            console.error('Failed to initialize gas price cache', err);
+        }
     }
 
     // Returns the current recommended gas price from the network in WEI as a string
     public async getGasPrice(): Promise<IGasPriceCache> {
         if (!this.gasPriceCache) {
-            console.log(this.gasPriceCache)
             // It may throw an exception if something wrong
             await this.updateGasPriceCache();
         }
-
-        console.log(this.gasPriceCache)
 
         return this.gasPriceCache!;
     }
@@ -88,17 +90,11 @@ export class TradingService {
         const amountInBigInt = BigInt(amountIn)
 
         // Uniswap v2 takes 0.03% from the input amount, so the actual amount to be extracted from the pool is amountIn - 0.03%
-        const feeFraction = 0.003; // 0.3%
-        const precision = 1_000_000n;
-
-        const numerator = BigInt(Math.round(feeFraction * Number(precision)));
-        const tradingFee = (amountInBigInt * numerator) / precision;
-
-
-        const amountInAvailable = amountInBigInt - tradingFee;
-        const tokenFromReserveAfter = tokenFromReserve + amountInAvailable;
+        // x * 997 / 1000 takes exactly 0.03%
+        const amountInAvailable = amountInBigInt * 997n / 1000n;
 
         // For more information on the formula, see https://rareskills.io/post/uniswap-v2-price-impact
+        const tokenFromReserveAfter = tokenFromReserve + amountInAvailable;
         const expectedAmountOut = tokenToReserve - ((tokenFromReserve * tokenToReserve) / tokenFromReserveAfter);
 
         return expectedAmountOut.toString();
@@ -114,20 +110,16 @@ export class TradingService {
             if (life < this.appConfigService.gasPriceCacheTTLMs) return;
         }
 
-        console.log('PAST TTL')
-
         let feeData: ethers.FeeData | null;
 
         try {
             feeData = await this.provider.getFeeData();
-            console.log(feeData)
         } catch (ex) {
-            console.log(ex)
             throw new TradingGasPriceFetchException('Failed to fetch fee data');
         }
 
         // The returned feeData may be null
-        if (feeData.gasPrice == null) {
+        if (!feeData.gasPrice) {
             throw new TradingGasPriceFetchException('Gas price is null');
         }
 
