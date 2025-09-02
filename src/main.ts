@@ -1,9 +1,13 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { AppLoggerService } from './logger/app-logger.service';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    // Wait for a custom logger to be initiated
+    bufferLogs: true
+  });
 
   // Swagger docs setup
   if (process.env.NODE_ENV != 'production') {
@@ -16,6 +20,10 @@ async function bootstrap() {
     const document = SwaggerModule.createDocument(app, config);
     SwaggerModule.setup('/docs', app, document);
   }
+
+  // Use custom logger service
+  const appLogger = await app.resolve(AppLoggerService);
+  app.useLogger(appLogger);
 
   await app.listen(process.env.PORT ?? 3000);
 }

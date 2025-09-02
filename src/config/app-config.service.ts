@@ -16,8 +16,12 @@ export class AppConfigService {
 
     // ETH
 
-    public get ethRpcUri(): string {
-        return this.configService.getOrThrow<string>('ETH_RTC_URI');
+    public get ethRpcApiKey(): string {
+        return this.configService.getOrThrow<string>('ETH_RPC_API_KEY');
+    }
+
+    public get ethRpcChainId(): number {
+        return this.configService.getOrThrow<number>('ETH_RPC_CHAIN_ID');
     }
 
     public get gasPriceCacheTTLMs(): number {
@@ -27,10 +31,11 @@ export class AppConfigService {
     // Uniswap v2
 
     public get uniswapV2FactoryAddress(): string {
-        return this.configService.getOrThrow<string>('UNISWAP_v2_FACTORY_ADDRESS');
+        return this.configService.getOrThrow<string>('UNISWAP_V2_FACTORY_ADDRESS');
     }
 
-    public get uniswapV2TradingFee(): number {
-        return this.configService.getOrThrow<number>('UNISWAP_v2_TRADING_FEE');
-    }
+    // Too needlessly complicated to implement dynamic
+    // public get uniswapV2TradingFee(): number {
+    //     return this.configService.getOrThrow<number>('UNISWAP_v2_TRADING_FEE');
+    // }
 }

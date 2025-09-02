@@ -1,0 +1,1 @@
+export { ETH_CONTRACT_PATTERN } from './eth.regex';

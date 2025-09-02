@@ -1,9 +1,10 @@
-import { TradingExceptionCode } from "./trading-exception-code.enum";
+import { HttpExceptionStatus } from "src/common/decorators/http-exception-status.decorator";
+import { ServiceExceptionCode } from "src/common/exceptions/service-exception-code.enum";
+import { BaseServiceException } from "src/common/exceptions/base-service.exception";
 
-export class TradingGasPriceFetchException extends Error {
-    public code = TradingExceptionCode.GAS_PRICE_FETCH_FAILED;
-
-    constructor(message: string) {
-        super(message);
+@HttpExceptionStatus(500)
+export class TradingGasPriceFetchException extends BaseServiceException {
+    constructor(message?: string, details?: Record<string, any>) {
+        super(ServiceExceptionCode.TRADING_GAS_PRICE_FETCH_FAILED, message, details);
     }
 }

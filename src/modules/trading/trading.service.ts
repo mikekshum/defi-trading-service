@@ -14,31 +14,38 @@ export class TradingService {
     private provider: ethers.JsonRpcProvider;
     private uniswapFactoryContract: Contract;
 
-    private gasPriceCache: IGasPriceCache | null;
+    private gasPriceCache: IGasPriceCache | null = null;
 
     constructor(
         private readonly appConfigService: AppConfigService
     ) {
-        this.provider = new ethers.JsonRpcProvider(this.appConfigService.ethRpcUri);
+        this.provider = new ethers.AlchemyProvider(
+            this.appConfigService.ethRpcChainId, 
+            this.appConfigService.ethRpcApiKey,
+        );
+
         this.uniswapFactoryContract = new ethers.Contract(this.appConfigService.uniswapV2FactoryAddress, UniswapV2FactoryABI, this.provider);
         this.updateGasPriceCache();
     }
 
     // Returns the current recommended gas price from the network in WEI as a string
     public async getGasPrice(): Promise<IGasPriceCache> {
-        if (this.gasPriceCache == null) {
+        if (!this.gasPriceCache) {
+            console.log(this.gasPriceCache)
             // It may throw an exception if something wrong
             await this.updateGasPriceCache();
         }
+
+        console.log(this.gasPriceCache)
 
         return this.gasPriceCache!;
     }
 
     // Returns estimated token return as a string
-    public async getEstimatedTokenReturn(
+    public async getTokenReturn(
         tokenFrom: string,
         tokenTo: string,
-        amountIn: number
+        amountIn: string
     ): Promise<string> {
         // Get UniswapV2Pair contract address
         let pairContractAddress: string;
@@ -77,9 +84,18 @@ export class TradingService {
             tokenToReserve = pairReserves[0];
         }
 
+        // Convert to bigint
+        const amountInBigInt = BigInt(amountIn)
+
         // Uniswap v2 takes 0.03% from the input amount, so the actual amount to be extracted from the pool is amountIn - 0.03%
-        const tradingFee = amountIn * this.appConfigService.uniswapV2TradingFee;
-        const amountInAvailable = BigInt(amountIn - tradingFee);
+        const feeFraction = 0.003; // 0.3%
+        const precision = 1_000_000n;
+
+        const numerator = BigInt(Math.round(feeFraction * Number(precision)));
+        const tradingFee = (amountInBigInt * numerator) / precision;
+
+
+        const amountInAvailable = amountInBigInt - tradingFee;
         const tokenFromReserveAfter = tokenFromReserve + amountInAvailable;
 
         // For more information on the formula, see https://rareskills.io/post/uniswap-v2-price-impact
@@ -98,11 +114,15 @@ export class TradingService {
             if (life < this.appConfigService.gasPriceCacheTTLMs) return;
         }
 
+        console.log('PAST TTL')
+
         let feeData: ethers.FeeData | null;
 
         try {
             feeData = await this.provider.getFeeData();
+            console.log(feeData)
         } catch (ex) {
+            console.log(ex)
             throw new TradingGasPriceFetchException('Failed to fetch fee data');
         }
 
