@@ -4,14 +4,15 @@ import { AppLoggerModule } from "src/logger/app-logger.module";
 import { TradingController } from "./trading.controller";
 import { TradingService } from "./trading.service";
 import { GasPriceCacheScheduler } from "./schedulers/gas-price-cache.scheduler";
-import { EthAdapterModule, IEthAdapterConfig } from "src/adapters/eth/eth-adapter.module";
+import { EthAdapterModule } from "src/adapters/eth/eth-adapter.module";
 import { AppConfigService } from "src/config/app-config.service";
+import { IEthAdapterServiceConfig } from "src/adapters/eth/eth-adapter.service";
 
 @Module({
     imports: [
         EthAdapterModule.registerAsync({
             imports: [AppConfigModule],
-            useFactory: (configService: AppConfigService): IEthAdapterConfig => ({
+            useFactory: (configService: AppConfigService): IEthAdapterServiceConfig => ({
                 ethRpcUri: configService.ethRpcUri,
                 uniswapV2FactoryAddress: configService.uniswapV2FactoryAddress,
             }),

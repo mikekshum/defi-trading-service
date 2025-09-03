@@ -1,0 +1,19 @@
+FROM node:20-alpine
+
+# Update system packages to patch vulnerabilities
+RUN apk update && apk upgrade --no-cache
+
+WORKDIR /app
+
+# Install dev dependencies
+COPY package*.json ./
+RUN npm ci
+
+# Copy source code
+COPY . .
+
+# Expose port
+EXPOSE 3000
+
+# Run NestJS in dev mode (hot reload)
+CMD ["npm", "run", "start:dev"]

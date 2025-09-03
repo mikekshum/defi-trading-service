@@ -1,5 +1,5 @@
 {
-  "name": "1inch_test_app",
+  "name": "defi_trading_test_service",
   "version": "0.0.1",
   "description": "A Nest.js backend microservice for DeFi trading and on-chain data aggregation",
   "author": "Mike Shum",

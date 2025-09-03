@@ -1,0 +1,11 @@
+services:
+  defi_trading_test_service:
+    build:
+      context: ../..
+      dockerfile: docker/prod/Dockerfile
+    container_name: defi_trading_test_service
+    ports:
+      - "${APP_PORT}:${APP_PORT}"
+    environment:
+      NODE_ENV: production
+    restart: unless-stopped

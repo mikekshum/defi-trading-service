@@ -11,7 +11,7 @@ const mockTradingService: Partial<jest.Mocked<TradingService>> = {
     getTokenReturn: jest.fn(),
 };
 
-describe('TradingController', () => {
+describe("TradingController", () => {
     let controller: TradingController;
 
     beforeEach(async () => {
@@ -29,30 +29,30 @@ describe('TradingController', () => {
         jest.clearAllMocks();
     });
 
-    it('should be defined', () => {
+    it("should be defined", () => {
         expect(controller).toBeDefined();
     });
 
-    describe('getGasPrice', () => {
-        it('should return mapped DTO', async () => {
+    describe("getGasPrice", () => {
+        it("should return mapped DTO", async () => {
             const now = new Date();
             mockTradingService.getGasPrice!.mockResolvedValue({
-                value: '123456',
+                value: "123456",
                 timestamp: now,
             });
 
             const result: GasPriceResponseDTO = await controller.getGasPrice();
 
             expect(result).toEqual({
-                wei: '123456',
+                wei: "123456",
                 timestamp: now.getTime(),
             });
             expect(mockTradingService.getGasPrice).toHaveBeenCalledTimes(1);
         });
 
-        it('should propagate service error', async () => {
+        it("should propagate service error", async () => {
             mockTradingService.getGasPrice!.mockRejectedValue(
-                new TradingEthAdapterFailedException('fail'),
+                new TradingEthAdapterFailedException("fail"),
             );
 
             await expect(controller.getGasPrice()).rejects.toThrow(
@@ -61,35 +61,35 @@ describe('TradingController', () => {
         });
     });
 
-    describe('getTokenReturn', () => {
-        it('should return mapped DTO', async () => {
+    describe("getTokenReturn", () => {
+        it("should return mapped DTO", async () => {
             const dto: TokenReturnRequestDTO = {
-                fromTokenAddress: 'tokenFrom',
-                toTokenAddress: 'tokenTo',
-                amountIn: '100',
+                fromTokenAddress: "tokenFrom",
+                toTokenAddress: "tokenTo",
+                amountIn: "100",
             };
 
-            mockTradingService.getTokenReturn!.mockResolvedValue('200');
+            mockTradingService.getTokenReturn!.mockResolvedValue("200");
 
             const result: TokenReturnResponseDTO = await controller.getTokenReturn(dto);
 
-            expect(result).toEqual({ amountOut: '200' });
+            expect(result).toEqual({ amountOut: "200" });
             expect(mockTradingService.getTokenReturn).toHaveBeenCalledWith(
-                'tokenFrom',
-                'tokenTo',
-                '100',
+                "tokenFrom",
+                "tokenTo",
+                "100",
             );
         });
 
-        it('should propagate service errors', async () => {
+        it("should propagate service errors", async () => {
             mockTradingService.getTokenReturn!.mockRejectedValue(
-                new TradingEthAdapterFailedException('pair fail'),
+                new TradingEthAdapterFailedException("pair fail"),
             );
 
             const dto: TokenReturnRequestDTO = {
-                fromTokenAddress: 'tokenFrom',
-                toTokenAddress: 'tokenTo',
-                amountIn: '100',
+                fromTokenAddress: "tokenFrom",
+                toTokenAddress: "tokenTo",
+                amountIn: "100",
             };
 
             await expect(controller.getTokenReturn(dto)).rejects.toThrow(

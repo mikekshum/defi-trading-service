@@ -1,0 +1,13 @@
+services:
+  defi_trading_test_service:
+    build:
+      context: ../..
+      dockerfile: docker/dev/Dockerfile
+    container_name: defi_trading_test_service
+    ports:
+      - "${APP_PORT}:${APP_PORT}"
+    volumes:
+      - ../../:/app
+      - /app/node_modules
+    environment:
+      NODE_ENV: development

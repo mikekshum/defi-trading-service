@@ -6,7 +6,7 @@ import { AppConfigModule } from "./config/app-config.module";
 import { AppLoggerModule } from "./logger/app-logger.module";
 import { TradingModule } from "./modules/trading/trading.module";
 import { ScheduleModule } from "@nestjs/schedule";
-import { EthAdapterModule, IEthAdapterConfig } from "./adapters/eth/eth-adapter.module";
+import { EthAdapterModule } from "./adapters/eth/eth-adapter.module";
 import { AppConfigService } from "./config/app-config.service";
 import { EthAdapterService } from "./adapters/eth/eth-adapter.service";
 

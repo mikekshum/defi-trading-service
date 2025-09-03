@@ -8,6 +8,13 @@ import { IPairMetadata } from "./types/pair-metadata.type";
 import { EthAdapterGasPriceFetchException } from "./exceptions/eth-adapter-gas-price-fetch.exception";
 import { EthAdapterFactoryContractCallException } from "./exceptions/eth-adapter-factory-contract-call.exception";
 import { EthAdapterPairContractCallException } from "./exceptions/eth-adapter-pair-contract-call.exception";
+import { AppLoggerService } from "src/logger/app-logger.service";
+
+export interface IEthAdapterServiceConfig {
+    ethRpcUri: string;
+    uniswapV2FactoryAddress: string;
+}
+
 
 @Injectable()
 export class EthAdapterService {
@@ -15,21 +22,27 @@ export class EthAdapterService {
     private uniswapV2FactoryContract: Contract;
 
     constructor(
-        @Inject('rpcUri')
-        rpcUri: string, 
-        @Inject('uniswapV2FactoryContractAddress')
-        uniswapV2FactoryContractAddress: string
+        private readonly appLoggerService: AppLoggerService,
+        @Inject("ETH_ADAPTER_CONFIG")
+        config: IEthAdapterServiceConfig
     ) {
-        this.provider = new ethers.JsonRpcProvider(rpcUri);
-        this.uniswapV2FactoryContract = new ethers.Contract(uniswapV2FactoryContractAddress, UniswapV2FactoryABI, this.provider);
+        console.log(config)
+        this.provider = new ethers.JsonRpcProvider(config.ethRpcUri);
+        this.uniswapV2FactoryContract = new ethers.Contract(config.uniswapV2FactoryAddress, UniswapV2FactoryABI, this.provider);
+
+        this.appLoggerService.setContext(this.constructor.name);
     }
 
     // Returns a pair address if exists, throws error if not found
     async getUniswapV2PairContractAddress(tokenA: string, tokenB: string): Promise<string> {
+        this.appLoggerService.debug("Fetching Uniswap V2 pair contract address...", { tokenA, tokenB });
+
         let pairContractAddress: string;
         try {
             pairContractAddress = await this.uniswapV2FactoryContract.getPair(tokenA, tokenB);
+            this.appLoggerService.debug("Pair contract address fetched", { tokenA, tokenB, pairContractAddress });
         } catch (ex) {
+            this.appLoggerService.error("Failed to fetch pair contract address from Uniswap V2 factory", { error: ex });
             throw new EthAdapterFactoryContractCallException("Failed to get pair");
         }
 
@@ -38,13 +51,17 @@ export class EthAdapterService {
 
     // Returns necessary uniswap v2 pair metadata
     async getUniswapV2PairContractMetadata(pairContractAddress: string): Promise<IPairMetadata> {
+        this.appLoggerService.debug("Fetching Uniswap V2 pair contract metadata...", { pairContractAddress });
+
         const pairContract = new ethers.Contract(pairContractAddress, UniswapV2PairABI, this.provider);
 
         // Getting reserves for both tokens
         let pairReserves: bigint[];
         try {
             pairReserves = await pairContract.getReserves();
+            this.appLoggerService.debug("Pair reserves fetched", { pairContractAddress, pairReserves });
         } catch (ex) {
+            this.appLoggerService.error("Failed to fetch pair reserves", { pairContractAddress, error: ex });
             throw new EthAdapterPairContractCallException("Failed to get reserves");
         }
 
@@ -52,7 +69,9 @@ export class EthAdapterService {
         let pairToken0: string;
         try {
             pairToken0 = await pairContract.token0() as string;
+            this.appLoggerService.debug("Token0 fetched", { pairContractAddress, pairToken0 });
         } catch (ex) {
+            this.appLoggerService.error("Failed to fetch token0 from pair contract", { pairContractAddress, error: ex });
             throw new EthAdapterPairContractCallException("Failed to get token0");
         }
 
@@ -65,16 +84,21 @@ export class EthAdapterService {
 
     // Fetches fee data from the network
     async getFeeData(): Promise<IFeeData> {
+        this.appLoggerService.debug("Fetching fee data from provider");
+
         let feeData: ethers.FeeData | null;
 
         try {
             feeData = await this.provider.getFeeData();
+            this.appLoggerService.debug("Fee data fetched", { feeData });
         } catch (ex) {
+            this.appLoggerService.error("Failed to fetch fee data from provider", { error: ex });
             throw new EthAdapterGasPriceFetchException("Failed to fetch fee data");
         }
 
         // The returned feeData may be null
         if (!feeData.gasPrice) {
+            this.appLoggerService.error("Gas price is null in fetched fee data", { feeData });
             throw new EthAdapterGasPriceFetchException("Gas price is null");
         }
 

@@ -11,7 +11,7 @@ export class GasPriceCacheScheduler {
         private readonly tradingService: TradingService
     ) { }
 
-    // Checks if it"s valid for update every 1000 ms
+    // Checks if it's valid for update every 1000 ms
     @Interval(1000)
     public async checkAndUpdateGasPriceCache() {
         // It works with outgoing requests, so to avoid data-racing conditions
