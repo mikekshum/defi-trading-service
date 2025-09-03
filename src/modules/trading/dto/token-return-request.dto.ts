@@ -8,9 +8,8 @@ export class TokenReturnRequestDTO {
     @IsString()
     @Matches(ETH_CONTRACT_PATTERN)
     @ApiProperty({
-        pattern: String(ETH_CONTRACT_PATTERN),
         description: "Smart contract address of the FROM token",
-        example: "0x66a0f676479Cee1d7373f3DC2e2952778BfF5bd6"
+        example: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
     })
     public readonly fromTokenAddress: string;
 
@@ -18,7 +17,6 @@ export class TokenReturnRequestDTO {
     @IsString()
     @Matches(ETH_CONTRACT_PATTERN)
     @ApiProperty({
-        pattern: String(ETH_CONTRACT_PATTERN),
         description: "Smart contract address of the TO token",
         example: "0x66a0f676479Cee1d7373f3DC2e2952778BfF5bd6"
     })
