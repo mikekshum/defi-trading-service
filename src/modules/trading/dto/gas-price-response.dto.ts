@@ -13,4 +13,6 @@ export class GasPriceResponseDTO {
         example: 393848494900
     })
     public readonly timestamp: number;
+
+    
 }

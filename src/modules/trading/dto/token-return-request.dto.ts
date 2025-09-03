@@ -1,6 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { IsDefined, IsNumberString, IsString, Matches } from "class-validator";
 import { ETH_CONTRACT_PATTERN } from "../../../common/regex";
+import { IsPositiveNumberString } from "../../../common/validators/is-positive-number-string.validation";
 
 export class TokenReturnRequestDTO {
     @IsDefined()
@@ -24,7 +25,7 @@ export class TokenReturnRequestDTO {
     public readonly toTokenAddress: string;
 
     @IsDefined()
-    @IsNumberString()
+    @IsPositiveNumberString()
     @ApiProperty({
         description: "Amount or FROM token user is giving in. In smallest token unit"
     })

@@ -1,14 +1,16 @@
 import { Inject, Injectable } from "@nestjs/common";
 import { Contract, ethers } from "ethers";
-
-import UniswapV2FactoryABI from "./abi/uniswap-v2-factory.json";
-import UniswapV2PairABI from "./abi/uniswap-v2-pair.json";
 import { IFeeData } from "./types/fee-data.type";
 import { IPairMetadata } from "./types/pair-metadata.type";
 import { EthAdapterGasPriceFetchException } from "./exceptions/eth-adapter-gas-price-fetch.exception";
 import { EthAdapterFactoryContractCallException } from "./exceptions/eth-adapter-factory-contract-call.exception";
 import { EthAdapterPairContractCallException } from "./exceptions/eth-adapter-pair-contract-call.exception";
-import { AppLoggerService } from "src/logger/app-logger.service";
+import { AppLoggerService } from "../../logger/app-logger.service";
+
+import UniswapV2FactoryABI from "./abi/uniswap-v2-factory.json";
+import UniswapV2PairABI from "./abi/uniswap-v2-pair.json";
+import ERC20ABI from "./abi/erc-20.json";
+import { EthAdapterTokenContractCallException } from "./exceptions/eth-adapter-token-contract-call.exception";
 
 export interface IEthAdapterServiceConfig {
     ethRpcUri: string;
@@ -40,11 +42,12 @@ export class EthAdapterService {
         let pairContractAddress: string;
         try {
             pairContractAddress = await this.uniswapV2FactoryContract.getPair(tokenA, tokenB);
-            this.appLoggerService.debug("Pair contract address fetched", { tokenA, tokenB, pairContractAddress });
         } catch (ex) {
             this.appLoggerService.error("Failed to fetch pair contract address from Uniswap V2 factory", { error: ex });
             throw new EthAdapterFactoryContractCallException("Failed to get pair");
         }
+
+        this.appLoggerService.debug("Pair contract address fetched", { tokenA, tokenB, pairContractAddress });
 
         return pairContractAddress;
     }
@@ -59,21 +62,23 @@ export class EthAdapterService {
         let pairReserves: bigint[];
         try {
             pairReserves = await pairContract.getReserves();
-            this.appLoggerService.debug("Pair reserves fetched", { pairContractAddress, pairReserves });
         } catch (ex) {
             this.appLoggerService.error("Failed to fetch pair reserves", { pairContractAddress, error: ex });
             throw new EthAdapterPairContractCallException("Failed to get reserves");
         }
 
+        this.appLoggerService.debug("Pair reserves fetched", { pairContractAddress, pairReserves });
+
         // pairs can be returned in random order. Getting token0 to map them -> tokenFrom, tokenTo
         let pairToken0: string;
         try {
             pairToken0 = await pairContract.token0() as string;
-            this.appLoggerService.debug("Token0 fetched", { pairContractAddress, pairToken0 });
         } catch (ex) {
             this.appLoggerService.error("Failed to fetch token0 from pair contract", { pairContractAddress, error: ex });
             throw new EthAdapterPairContractCallException("Failed to get token0");
         }
+
+        this.appLoggerService.debug("Token0 fetched", { pairContractAddress, pairToken0 });
 
         return {
             token0: pairToken0,
@@ -90,11 +95,12 @@ export class EthAdapterService {
 
         try {
             feeData = await this.provider.getFeeData();
-            this.appLoggerService.debug("Fee data fetched", { feeData });
         } catch (ex) {
             this.appLoggerService.error("Failed to fetch fee data from provider", { error: ex });
             throw new EthAdapterGasPriceFetchException("Failed to fetch fee data");
         }
+
+        this.appLoggerService.debug("Fee data fetched", { feeData });
 
         // The returned feeData may be null
         if (!feeData.gasPrice) {
@@ -107,5 +113,24 @@ export class EthAdapterService {
             gasPrice: feeData.gasPrice,
             maxPriorityFeePerGas: feeData.maxPriorityFeePerGas
         };
+    }
+
+    // Returns the decimals of an ERC20 token
+    async getERC20Decimals(tokenAddress: string): Promise<number> {
+        this.appLoggerService.debug("Fetching ERC20 token decimals...", { tokenAddress });
+
+        const tokenContract = new ethers.Contract(tokenAddress, ERC20ABI, this.provider);
+
+        let decimals: number;
+        try {
+            decimals = await tokenContract.decimals();
+        } catch (ex) {
+            this.appLoggerService.error("Failed to fetch ERC20 token decimals", { tokenAddress, error: ex });
+            throw new EthAdapterTokenContractCallException("Failed to get ERC20 decimals");
+        }
+
+        this.appLoggerService.debug("ERC20 token decimals fetched", { tokenAddress, decimals });
+
+        return decimals;
     }
 }

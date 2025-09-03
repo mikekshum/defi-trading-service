@@ -1,0 +1,1 @@
+export { ETH_DECIMALS } from './eth.static';

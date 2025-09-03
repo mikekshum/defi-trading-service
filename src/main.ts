@@ -27,7 +27,7 @@ async function bootstrap() {
   // Swagger docs setup
   if (process.env.NODE_ENV != "production") {
     const config = new DocumentBuilder()
-      .setTitle("1inch + Mike Shum = <3 | Test Assignment")
+      .setTitle("DeFi Trading Microservice | Test Assignment")
       .setDescription("A backend microservice for DeFi trading and on-chain data aggregation")
       .setVersion("1.0")
       .build();

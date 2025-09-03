@@ -7,6 +7,8 @@ import { EthAdapterService } from "../../adapters/eth/eth-adapter.service";
 import { IFeeData } from "../../adapters/eth/types/fee-data.type";
 import { TradingEthAdapterFailedException } from "./exceptions/trading-eth-adapter-failed.exception";
 import { IPairMetadata } from "../../adapters/eth/types/pair-metadata.type";
+import { ethers } from "ethers";
+import { ETH_DECIMALS } from "../../common/static";
 
 @Injectable()
 export class TradingService implements OnModuleInit {
