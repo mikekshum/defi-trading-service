@@ -28,7 +28,6 @@ export class EthAdapterService {
         @Inject("ETH_ADAPTER_CONFIG")
         config: IEthAdapterServiceConfig
     ) {
-        console.log(config)
         this.provider = new ethers.JsonRpcProvider(config.ethRpcUri);
         this.uniswapV2FactoryContract = new ethers.Contract(config.uniswapV2FactoryAddress, UniswapV2FactoryABI, this.provider);
 
