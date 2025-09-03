@@ -1,27 +1,24 @@
 import { Injectable, OnModuleInit } from "@nestjs/common";
-import { Contract, ethers } from "ethers";
-import { AppConfigService } from "src/config/app-config.service";
-import { TradingGasPriceFetchException } from "./exceptions/trading-gas-price-fetch.exception";
-
-import UniswapV2FactoryABI from "src/modules/trading/abi/uniswap-v2-factory.json";
-import UniswapV2PairABI from "src/modules/trading/abi/uniswap-v2-pair.json";
+import { AppConfigService } from "../../config/app-config.service";
 import { IGasPriceCache } from "./types/gas-price-cache.type";
-import { TradingFactoryContractCallException } from "./exceptions/trading-factory-contract-call.exception";
-import { TradingPairContractCallException } from "./exceptions/trading-pair-contract-call.exception";
+import { calculateUniswapV2Return } from "../../common/utils";
+import { AppLoggerService } from "../../logger/app-logger.service";
+import { EthAdapterService } from "../../adapters/eth/eth-adapter.service";
+import { IFeeData } from "../../adapters/eth/types/fee-data.type";
+import { TradingEthAdapterFailedException } from "./exceptions/trading-eth-adapter-failed.exception";
+import { IPairMetadata } from "../../adapters/eth/types/pair-metadata.type";
 
 @Injectable()
 export class TradingService implements OnModuleInit {
-    private provider: ethers.JsonRpcProvider;
-    private uniswapFactoryContract: Contract;
-
     private gasPriceCache: IGasPriceCache | null = null;
 
     constructor(
-        private readonly appConfigService: AppConfigService
+        private readonly ethAdapterService: EthAdapterService,
+        private readonly appConfigService: AppConfigService,
+        private readonly appLoggerService: AppLoggerService
     ) {
-        this.provider = new ethers.JsonRpcProvider(this.appConfigService.ethRpcUri)
-
-        this.uniswapFactoryContract = new ethers.Contract(this.appConfigService.uniswapV2FactoryAddress, UniswapV2FactoryABI, this.provider);
+        // Logger context as the class name
+        this.appLoggerService.setContext(this.constructor.name);
     }
 
     // Initialize gas price caching process
@@ -29,12 +26,14 @@ export class TradingService implements OnModuleInit {
         try {
             await this.updateGasPriceCache();
         } catch (err) {
-            console.error('Failed to initialize gas price cache', err);
+            console.error("Failed to initialize gas price cache", err);
         }
     }
 
     // Returns the current recommended gas price from the network in WEI as a string
     public async getGasPrice(): Promise<IGasPriceCache> {
+        this.appLoggerService.debug("")
+
         if (!this.gasPriceCache) {
             // It may throw an exception if something wrong
             await this.updateGasPriceCache();
@@ -52,57 +51,47 @@ export class TradingService implements OnModuleInit {
         // Get UniswapV2Pair contract address
         let pairContractAddress: string;
         try {
-            pairContractAddress = await this.uniswapFactoryContract.getPair(tokenFrom, tokenTo);
+            pairContractAddress = await this.ethAdapterService.getUniswapV2PairContractAddress(tokenFrom, tokenTo);
         } catch (ex) {
-            throw new TradingFactoryContractCallException('Failed to get pair');
+            throw new TradingEthAdapterFailedException("Eth adapter failed to fetch pair contract address");
         }
 
-        const pairContract = new ethers.Contract(pairContractAddress, UniswapV2PairABI, this.provider);
-
-        // Getting reserves for both tokens
-        let pairReserves: bigint[];
+        // Get UniswapV2Pair contract metadata
+        let pairContractMetadata: IPairMetadata;
         try {
-            pairReserves = await pairContract.getReserves();
+            pairContractMetadata = await this.ethAdapterService.getUniswapV2PairContractMetadata(pairContractAddress);
         } catch (ex) {
-            throw new TradingPairContractCallException('Failed to get reserves');
+            throw new TradingEthAdapterFailedException("Eth adapter failed to fetch pair contract on-chain data");
         }
 
-        // pairs can be returned in random order. Getting token0 to map them -> tokenFrom, tokenTo
-        let pairToken0: string;
-        try {
-            pairToken0 = await pairContract.token0() as string;
-        } catch (ex) {
-            throw new TradingPairContractCallException('Failed to get token0');
-        }
-
+        // We have to match to token0 to validate the reserves order
         let tokenFromReserve: bigint;
         let tokenToReserve: bigint;
 
-        if (pairToken0 == tokenFrom) {
-            tokenFromReserve = pairReserves[0];
-            tokenToReserve = pairReserves[1];
+        if (pairContractMetadata.token0 == tokenFrom) {
+            tokenFromReserve = pairContractMetadata.reserve0;
+            tokenToReserve = pairContractMetadata.reserve1;
         } else {
-            tokenFromReserve = pairReserves[1];
-            tokenToReserve = pairReserves[0];
+            tokenFromReserve = pairContractMetadata.reserve1;
+            tokenToReserve = pairContractMetadata.reserve0;
         }
 
         // Convert to bigint
         const amountInBigInt = BigInt(amountIn)
 
-        // Uniswap v2 takes 0.03% from the input amount, so the actual amount to be extracted from the pool is amountIn - 0.03%
-        // x * 997 / 1000 takes exactly 0.03%
-        const amountInAvailable = amountInBigInt * 997n / 1000n;
+        // See the function
+        const amountOut = calculateUniswapV2Return(
+            amountInBigInt,
+            tokenFromReserve,
+            tokenToReserve
+        );
 
-        // For more information on the formula, see https://rareskills.io/post/uniswap-v2-price-impact
-        const tokenFromReserveAfter = tokenFromReserve + amountInAvailable;
-        const expectedAmountOut = tokenToReserve - ((tokenFromReserve * tokenToReserve) / tokenFromReserveAfter);
-
-        return expectedAmountOut.toString();
+        return amountOut.toString();
     }
 
     // To be called inside GasPriceCacheScheduler, updates the gas price cache
     public async updateGasPriceCache(): Promise<void> {
-        // Check TTL if it's valid for update
+        // Check TTL if it"s valid for update
         if (this.gasPriceCache) {
             const now = new Date();
             const life = now.getTime() - this.gasPriceCache.timestamp.getTime();
@@ -110,17 +99,12 @@ export class TradingService implements OnModuleInit {
             if (life < this.appConfigService.gasPriceCacheTTLMs) return;
         }
 
-        let feeData: ethers.FeeData | null;
+        let feeData: IFeeData;
 
         try {
-            feeData = await this.provider.getFeeData();
+            feeData = await this.ethAdapterService.getFeeData();
         } catch (ex) {
-            throw new TradingGasPriceFetchException('Failed to fetch fee data');
-        }
-
-        // The returned feeData may be null
-        if (!feeData.gasPrice) {
-            throw new TradingGasPriceFetchException('Gas price is null');
+            throw new TradingEthAdapterFailedException("Eth adapter failed to fetch fee data");
         }
 
         const gasPrice = feeData.gasPrice.toString();

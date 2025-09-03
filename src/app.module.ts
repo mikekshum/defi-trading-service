@@ -1,11 +1,14 @@
-import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { ConfigModule } from '@nestjs/config';
-import { AppConfigModule } from './config/app-config.module';
-import { AppLoggerModule } from './logger/app-logger.module';
-import { TradingModule } from './modules/trading/trading.module';
-import { ScheduleModule } from '@nestjs/schedule';
+import { Module } from "@nestjs/common";
+import { AppController } from "./app.controller";
+import { AppService } from "./app.service";
+import { ConfigModule } from "@nestjs/config";
+import { AppConfigModule } from "./config/app-config.module";
+import { AppLoggerModule } from "./logger/app-logger.module";
+import { TradingModule } from "./modules/trading/trading.module";
+import { ScheduleModule } from "@nestjs/schedule";
+import { EthAdapterModule, IEthAdapterConfig } from "./adapters/eth/eth-adapter.module";
+import { AppConfigService } from "./config/app-config.service";
+import { EthAdapterService } from "./adapters/eth/eth-adapter.service";
 
 @Module({
   imports: [
@@ -20,4 +23,4 @@ import { ScheduleModule } from '@nestjs/schedule';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }
