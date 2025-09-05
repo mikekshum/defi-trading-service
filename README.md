@@ -1,9 +1,9 @@
 # DeFi Trading Service
-It's my cover-letter / Deveveloper diary. I hope it finds you in good shape.  **DevOps**, and **launch instructions** are **down below**! 
+This is my cover-letter / Deveveloper diary. I hope it finds you in good shape.  **DevOps**, and **launch instructions** are **down below**! 
 
 This is an **"enterprise" solution** for the test technical specification I was given. A microservice for fetching on-chain data and implementing Web3 Math. I built it following SOLID architecture principles with decoupling of concepts, layers, logging and more. This project is **created from scratch**, using best practices and experience I've earned throughout my professional life.
 
-In this project **AI was used only for validation of ideas and some testing applications**. All the decisions, architecture, logic and codebase **was written by me personally**. Even though using AI to structurally access information is a modern way for getting it done in any field, I decided to avoid it to show my technical vision and ability to comprehend and build reliable, durable and robust systems.
+In this project, all the decisions, architecture, logic and codebase **was written by me personally**. Even though using AI to structurally access information is a modern way for getting it done in any field, I decided to avoid it to show my technical vision and ability to comprehend and build reliable, durable and robust systems.
 
 ## Development Process
 This assignment was a simplified slice of a DeFi trading backend.
