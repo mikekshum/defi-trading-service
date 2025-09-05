@@ -1,24 +1,15 @@
 # DeFi Trading Service
 It's my cover-letter / Deveveloper diary. I hope it finds you in good shape.  **DevOps**, and **launch instructions** are **down below**! 
 
-This is an **"enterprise" solution** for the test technical specification I was given. A microservice for fetching on-chain data and implementing "Web3 Math". I built it following SOLID architecture principles with decoupling of concepts, layers, logging and more. This project is **created from scratch**, using best practices and experience I've earned throughout my professional life.
+This is an **"enterprise" solution** for the test technical specification I was given. A microservice for fetching on-chain data and implementing Web3 Math. I built it following SOLID architecture principles with decoupling of concepts, layers, logging and more. This project is **created from scratch**, using best practices and experience I've earned throughout my professional life.
 
 In this project **AI was used only for validation of ideas and some testing applications**. All the decisions, architecture, logic and codebase **was written by me personally**. Even though using AI to structurally access information is a modern way for getting it done in any field, I decided to avoid it to show my technical vision and ability to comprehend and build reliable, durable and robust systems.
-
-## Preface
-First of all, thank you for this assignment. It reminded me that I really enjoy working in the Blockchain space, building meaningful software that focuses on design, purpose, and robustness, rather than just meeting deadlines or cutting corners as it happens in outsourcing.
-
-Over the past days, I dived a bit into 1inch, your team, and your products. I’m genuinely interested. You have a unique vibe, incredible success, and an outstanding future. I would love to contribute long-term. With the right environment, I’m confident I can bring real value and serve the team well.
-
-I’m not interested in moonlighting or big-tech, so if I get your offer, I’ll accept it immediately and move to Dubai in a matter of days. I love working from office so if it's acceptable, I'm eager to work on-site as much as possible to be inside the creative process. You would get a loyal, motivated team member for years, fully committed to helping 1inch evolve further.
-
-Ok, let's start
 
 ## Development Process
 This assignment was a simplified slice of a DeFi trading backend.
 I treated it as a real enterprise service: structured DTOs, explicit request/response validation, Swagger docs, clean separation of infrastructure adapters <–> service <–> transport, robust config, custom logging, advanced exception handling.
 
-In production systems like yours, this approach scales into dozens of modules and hundreds of error types, but the principles stay the same: separation, observability, consistency.
+In production systems, this approach scales into dozens of modules and hundreds of error types, but the principles stay the same: separation, observability, consistency.
 
 So I tried to demonstrate how I design production-grade, maintainable systems even for small scopes. And I'm a fan of it. This is very far from ideal but in 2 days I built a nice foundation and a boilerplate for maintainable service:
 
@@ -56,10 +47,7 @@ My result was off for ~0.25% all the time. I tried to tweak the formula around, 
 
 - https://github.com/Uniswap/v2-periphery/blob/master/contracts/libraries/UniswapV2Library.sol
 
-It's still off for some pairs. My guess is there are more parameters on the UI than the library uses. I think there is hidden variables, but my solution is pretty decent for the estimation task.
-
-##### Bigint
-In SaaS products, it's not really common to see bigints here and there, so I quite forgot the pitfalls. In the end of the day, I translated my math into integer-compatible and fixed the rest of the bugs. It did the trick.
+It's still off for some pairs. My guess is there are more parameters on the UI than the library uses. I think there are hidden variables. My solution is pretty decent for the estimation task though.
 
 ### Gas price 
 The gas price is an easy part (besides debugging Alchemy...). But response time <=50 ms? What do you think. I'm a senior. Right? Right. I know something about caching.
@@ -69,7 +57,7 @@ The real choice was whether to use redis or in-code service-level cache? Redis w
 I created an env. variable for a simple TTL setting. Declared types, properties and a smart update method + logic to ensure there's no way it may slow down the process. I couldn't update it when the TTL's up on-demand because It'd broke the rule of 50ms, so I decided to launch a little dummy scheduler. It checks the update method every 1000ms and ensures our invisible customers always get up-to-date gas price for their shady financial manipulations :) Just kidding! they are nice fellas.
 
 ### Testing
-I had a problem testing ethers.js, It was difficult to mock and always making some inevitable outbound calls. So I decided to introduce a cool infrastructure layer with adapters. Which I could easily mock. So I did it. 
+I had a problem testing ethers.js, It was difficult to mock and always making some inevitable outbound calls. So I decided to introduce an infrastructure layer with adapters. Which I could easily mock. So I did it. 
 
 ### What's more?
 I'd love to talk to you more, but it's rather some little project architecture decisions, boilerplate code, debbugging and refactoring here and there. Let's go to the DevOps and conclusion.
@@ -79,7 +67,7 @@ I'd love to talk to you more, but it's rather some little project architecture d
 ### Docker container & Docker Compose
 ```bash
 # Docker compose line
-docker-compose --env-file .env -f $(DEV_DIR)/docker-compose.yaml up --build
+docker-compose --env-file .env -f ./docker/dev/docker-compose.yaml up --build
 
 # Makefile launch line
 $ make dev-up
@@ -130,7 +118,7 @@ $ npm run test:cov
 ```
 
 ## Links & References
-As I previously mentioned, this is a non-AI project. So during my work process I was collecting most useful links, based on which 
+As I previously mentioned, this is a non-AI project. So during my work process I was collecting most useful links, based on which I implemented the business-logic
 
 Uniswap V2 Factory Contract on Etherscan
 - https://etherscan.io/address/0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f#readContract
@@ -147,9 +135,6 @@ Uniswap V2 AAM formula info
 - https://www.quicknode.com/guides/defi/dexs/how-to-swap-tokens-on-uniswap-with-ethersjs
 - https://rareskills.io/post/uniswap-v2-price-impact
 - https://github.com/Uniswap/v2-periphery/blob/master/contracts/libraries/UniswapV2Library.sol
-
-BigInt math recap
-- https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt
 
 Ethers Alchemy Provider
 - https://www.alchemy.com/docs/ethers-js-provider
