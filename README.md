@@ -41,8 +41,6 @@ I investigated the factory contract, learned its codebase, couple of view funcs 
 ##### AMM Formula
 I fetched its variables but was struggling to come up with the structure of the expression. Although, pretty quickly found some useful information: first, on their resources, second, stackoverflow –– idea was taking a form, -- and finally I found a beautiful article explaning the AMM Formula in detail. So after careful read, I translated the formula into code. We were all set for the first try. It worked!
 
-Hooray, I took a bit time off and was already searching sweet tikets to Dubai... ALAS!
-
 My result was off for ~0.25% all the time. I tried to tweak the formula around, but it didn't work. Then, I found their library and the original approach:
 
 - https://github.com/Uniswap/v2-periphery/blob/master/contracts/libraries/UniswapV2Library.sol
